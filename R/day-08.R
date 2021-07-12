@@ -21,7 +21,7 @@ covid %>%
   geom_col(aes(y = newCases), col = NA, fill = "#F5B8B5") +
   geom_line(aes(y = roll7), col = "darkred", size = 1) +
   ggthemes::theme_wsj() +
-  labs(title = paste("New Reported Cases by Day in", state.of.interest)) +
+  labs(title = paste("New Reported Covid Cases by Day in", state.of.interest)) +
   theme(plot.background = element_rect(fill = "white"),
         panel.background = element_rect(fill = "white"),
         plot.title = element_text(size = 14, face = 'bold')) +
