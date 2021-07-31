@@ -1,0 +1,60 @@
+---
+title: "Daily Exercise 14"
+author: "[Abby Vandenberg](https://abbyvandenberg.github.io/)"
+subtitle: "USA PIP Plot"
+output:
+  html_document:
+    theme: journal
+---
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(rmapshaper)
+library(sf)
+library(USAboundaries)
+
+get_conus = function(data, var){
+  filter(data, !get(var) %in% c("Hawaii", "Puerto Rico", "Alaska"))
+} 
+
+point_in_polygon = function(points, polygon, var){
+  st_join(polygon, points) %>% 
+    count(get(var))
+}
+
+plot_pip = function(data){
+  ggplot() + 
+    geom_sf(data = data, aes(fill = log(n)), alpha = .9, size = .2) + 
+    scale_fill_gradient(low = "grey", high = "blue") + 
+    theme_void() + 
+    theme(legend.position = 'none',
+          plot.title = element_text(face = "bold", color = "Purple", hjust = .5, size = 24)) +
+    labs(title = "Cities in Each US County",
+         subtitle = "Darker Counties Contain More Cities",
+         caption = paste0(sum(data$n), "Number of cities")) 
+}
+
+
+counties = st_transform(us_counties(), 4326) %>% 
+  select(name, geoid, state_name) %>% 
+  get_conus("state_name")
+#plot(counties$geometry)
+
+cities = read_csv("~/github/exercise-04/data/uscities.csv") %>%
+  st_as_sf(coords = c("lng", "lat"), crs = 4326) %>% 
+  get_conus("state_name")
+#plot(cities$geometry, pch = 16, cex = .1)
+
+counties1 <- counties
+cities1 <- cities
+
+point_in_polygon(cities1, counties1, var = 'city') %>% 
+  plot_pip()
+
+ggsave("citiespercountypip.png")
+
+```
+

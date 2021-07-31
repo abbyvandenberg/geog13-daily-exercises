@@ -100,7 +100,8 @@ covid %>%
   filter(state != "Unknown") %>% 
   group_by(state) %>% 
   summarize(deaths = sum(deaths), cases = sum(cases), deathratio = 100*(deaths / cases))%>%
-  slice_max(deathratio, n = 5)
+  slice_max(deathratio, n = 10)
+  
   
 ```
 

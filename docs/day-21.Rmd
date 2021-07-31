@@ -1,0 +1,53 @@
+---
+title: "Geography 13"
+author: "[Abby Vandenberg](https://abbyvandenberg.github.io/)"
+subtitle: "Day 21 Terrain Evaluation"
+output:
+  html_document:
+    theme: journal
+---
+
+```{r}
+library(dplyr)
+library(sf)
+library(tidyverse)
+library(raster)
+library(AOI)
+library(whitebox)
+library(elevatr)
+```
+
+```{r eval =FALSE}
+mo = AOI::aoi_get("Mount Saint Helens") %>% 
+  st_transform(5070) %>% 
+  st_buffer(500) %>% 
+  st_bbox() %>% 
+  st_as_sfc() %>% 
+  st_as_sf()
+
+
+elevation <- get_elev_raster(mo, z = 12) %>% 
+  crop(mo)
+plot(elevation)
+
+writeRaster(elevation, filename = "data/st_helens_elev.tif", overwrite = TRUE)
+
+wbt_slope("data/st_helens_elev.tif", "data/st_helens_slope.tif")
+wbt_aspect("data/st_helens_elev.tif", "data/st_helens_area_aspect.tif")
+wbt_hillshade("data/st_helens_elev.tif", "data/st_helens_hillshade.tif")
+```
+```{r eval = TRUE}
+e = raster("data/st_helens_elev.tif")
+plot(e, box = FALSE, axes = FALSE, col = viridis::viridis(256), main = "Elevation")
+
+s = raster("data/st_helens_slope.tif")
+plot(s, box = FALSE, axes = FALSE, col = terrain.colors(256), main = "Slope")
+
+a = raster("data/st_helens_area_aspect.tif")
+plot(a, box = FALSE, axes = FALSE, col = rainbow(8), main = "Aspect")
+ 
+r = raster("data/st_helens_hillshade.tif")
+plot(r, box = FALSE, axes = FALSE, col = gray.colors(256, alpha = .8), main = "Hillshade")
+```
+
+

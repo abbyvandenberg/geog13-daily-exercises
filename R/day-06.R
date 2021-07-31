@@ -45,6 +45,6 @@ covid %>%
        y = "Cases",
        caption = "Daily Exercise 06")
 
-
+plot(covid)
 
 

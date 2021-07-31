@@ -1,0 +1,100 @@
+---
+title: "Geography 13"
+author: "[Abby Vandenberg](https://abbyvandenberg.github.io/)"
+subtitle: "Day 16 First Raster"
+output:
+  html_document:
+    theme: journal
+---
+
+```{r}
+library(elevatr)
+library(dplyr)
+library(sf)
+library(tidyverse)
+library(raster)
+library(rgdal)
+library(leaflet)
+```
+
+```{r warning = FALSE}
+## Daily Exercise 17
+url = '~/github/geog-13-labs/data/uscities.csv'
+uscities <- read_csv(url)
+
+goletasf <- uscities %>%
+  st_as_sf(coords = c("lng", "lat"), crs = 4326) %>% 
+  filter(city == "Goleta") %>% 
+  st_transform(5070) %>% 
+  st_buffer(5000) %>%
+  st_bbox() %>% 
+  st_as_sfc() %>% 
+  st_as_sf()
+
+elevation <- get_elev_raster(goletasf, z = 11)
+
+goleta_elev <- crop(elevation, goletasf) 
+
+plot(goleta_elev)
+
+writeRaster(goleta_elev, filename = "goleta_elev.tif", overwrite = TRUE)
+```
+```{r}
+## Daily Exercise 18
+r = raster("goleta_elev.tif")
+
+threshold = function(x){ifelse(x <= 0, NA,1)}
+
+m = calc(r, threshold)
+
+ocean_cut = m * r 
+plot(ocean_cut, col = viridis::viridis(256))
+
+rcl = data.frame(min = seq(0,500,100), max = seq(100,600,100), lab = c(0:5))
+rc = reclassify(ocean_cut, rcl, lowerTRUE = TRUE)
+
+s = stack(r, m, ocean_cut, rc) %>% 
+  setNames(c("elevation", "land-mask", "terrain", "topography"))
+
+plot(s, col = viridis::viridis(256))
+```
+```{r}
+## Daily Exercise 19
+library(osmdata)
+library(dplyr)
+library(sf)
+
+bb <- goletasf %>% 
+  st_transform(4326) %>% 
+  st_bbox() 
+
+osm <- osmdata::opq(bb) %>% 
+  add_osm_feature(key = 'amenity', value = "restaurant") %>% 
+  osmdata::osmdata_sf()
+
+print(osm)
+
+restaurant <- osm$osm_points %>% 
+  dplyr::select(osm_id, name, amenity) %>% 
+  filter(!is.na(name)) %>%
+  st_transform(4326)
+
+elevation <- get_elev_raster(restaurant, z = 11)
+restaurant_elev <- extract(elevation, restaurant) 
+
+osm_rest <- restaurant %>% 
+  mutate(rest_elev = restaurant_elev)
+
+restleaflet <- leaflet(osm_rest) %>% 
+  addTiles() %>% 
+  addMarkers(label = osm_rest$name, popup = as.character(osm_rest$rest_elev))
+restleaflet
+  
+```
+
+
+ 
+
+
+
+

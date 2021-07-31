@@ -1,0 +1,56 @@
+---
+title: "Daily Exercise 13"
+author: "[Abby Vandenberg](https://abbyvandenberg.github.io/)"
+subtitle: "Spatial Simplifying US Map"
+output:
+  html_document:
+    theme: journal
+---
+```{r}
+library(rmapshaper)
+library(dplyr)
+library(sf)
+library(ggplot2)
+
+
+states = USAboundaries::us_states() %>%
+  filter(!stusps %in% c("PR", "AK", "HI")) %>% 
+  st_union() %>% 
+  st_transform(5070) 
+
+x = mapview::npts(states)
+
+ggplot(data = states)+
+  geom_sf()+
+  theme(aspect.ratio = .6)+
+  labs(title = paste("Unsimplified United States map containing", x, "points."))
+
+
+
+```
+```{r}
+states1000 = st_simplify(states, preserveTopology = FALSE, dTolerance = 20000) 
+y = mapview::npts(states1000) 
+ggplot(states1000)+
+  geom_sf()+
+  theme(aspect.ratio = .5)+
+  labs(title = paste("Douglas-Peucker map containing", y, "points, 20000 tolerance."))
+
+```
+
+```{r}
+states5 = ms_simplify(states, keep = .05) 
+z = mapview::npts(states5)
+ggplot(states5)+
+  geom_sf()+
+  theme(aspect.ratio = .5)+
+  labs(title = paste("Vivsvalignam map containing", z, "points, 5% of original."))
+
+
+
+
+```
+
+
+
+  

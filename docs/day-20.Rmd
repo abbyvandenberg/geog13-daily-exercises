@@ -1,0 +1,49 @@
+---
+title: "Geography 13"
+author: "[Abby Vandenberg](https://abbyvandenberg.github.io/)"
+subtitle: "Day 20 Kmeans"
+output:
+  html_document:
+    theme: journal
+---
+
+```{r}
+library(climateR)
+library(dplyr)
+library(sf)
+library(tidyverse)
+library(raster)
+```
+```{r}
+params <- c("prcp", "wind")
+
+AOI <- USAboundaries::us_states() %>% 
+  filter(name == "New York")
+
+NY <- climateR::getTerraClim(AOI, params, startDate = "2018-10-1") %>% 
+  stack() %>% 
+  setNames(params)
+plot(NY)
+
+elev <- elevatr::get_elev_raster(AOI, z = 5) %>% 
+  crop(AOI)
+
+elev <- projectRaster(elev, NY)
+
+values = stack(NY, elev) %>% 
+  values()
+
+idx = which(!is.na(values))
+v = na.omit(values)
+vs = scale(v)
+
+NY_kmeans = kmeans(vs, 5, iter.max = 100)
+clus_raster = elev[[1]]
+values(clus_raster) = NA
+clus_raster[idx] <- NY_kmeans$cluster
+
+plot(clus_raster, col = RColorBrewer::brewer.pal(5, "Spectral"))
+
+
+```
+
